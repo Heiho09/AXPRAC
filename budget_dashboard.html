@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>가족 지출 관리 대시보드</title>
-    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
-    <script src="[https://cdn.jsdelivr.net/npm/chart.js](https://cdn.jsdelivr.net/npm/chart.js)"></script>
+    <!-- ⚠️ 문제 해결: 스트림릿 환경에서도 차단되지 않는 완성형 CSS 파일로 교체 -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Chart.js도 호환성 높은 버전으로 안정화 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
-        @import url('[https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap](https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap)');
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap');
         body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; }
         .card { background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
         .tab-active { border-bottom: 2px solid #2563eb; color: #2563eb; }
@@ -151,7 +153,7 @@
     </div>
 
     <script>
-        // State Management (가족용 스토리지 키로 변경)
+        // State Management
         let budgetData = JSON.parse(localStorage.getItem('familyBudgetData')) || [];
         let categoryChart = null;
         let memberChart = null;
@@ -187,7 +189,6 @@
             saveData();
             renderHistory();
             
-            // 금액 입력칸만 초기화 (다른건 유지해서 연속 입력 편하게)
             document.getElementById('amount').value = ''; 
             
             showAlert('성공', '지출 내역이 정상적으로 기록되었습니다.');
@@ -243,7 +244,6 @@
             document.getElementById('stat-total').innerText = total.toLocaleString() + '원';
             document.getElementById('stat-count').innerText = budgetData.length + '건';
 
-            // Category aggregation
             const catMap = budgetData.reduce((acc, curr) => {
                 acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
                 return acc;
@@ -252,7 +252,6 @@
             const topCategory = Object.keys(catMap).reduce((a, b) => catMap[a] > catMap[b] ? a : b, '-');
             document.getElementById('stat-top-category').innerText = topCategory !== '-' ? `${topCategory} (${catMap[topCategory].toLocaleString()}원)` : '-';
 
-            // Charts
             renderCharts(catMap);
             renderSummaryTable();
         }
@@ -261,11 +260,9 @@
             const catCtx = document.getElementById('categoryChart').getContext('2d');
             const memCtx = document.getElementById('memberChart').getContext('2d');
 
-            // Destroy existing charts if they exist
             if(categoryChart) categoryChart.destroy();
             if(memberChart) memberChart.destroy();
 
-            // Category Chart (Doughnut)
             categoryChart = new Chart(catCtx, {
                 type: 'doughnut',
                 data: {
@@ -279,7 +276,6 @@
                 options: { responsive: true, cutout: '70%' }
             });
 
-            // Member Chart (Bar)
             const memMap = budgetData.reduce((acc, curr) => {
                 acc[curr.member] = (acc[curr.member] || 0) + curr.amount;
                 return acc;
@@ -306,7 +302,6 @@
             const tableBody = document.getElementById('summaryTableBody');
             const monthlyData = {};
 
-            // Grouping data by month and category
             budgetData.forEach(item => {
                 if(!monthlyData[item.month]) {
                     monthlyData[item.month] = { '식비': 0, '생활/쇼핑': 0, '교통/통신': 0, '기타': 0, total: 0 };
@@ -316,7 +311,6 @@
                 monthlyData[item.month].total += item.amount;
             });
 
-            // Sorting months descending
             const sortedMonths = Object.keys(monthlyData).sort((a, b) => b.localeCompare(a));
 
             tableBody.innerHTML = sortedMonths.map(month => {
@@ -338,7 +332,6 @@
             }
         }
 
-        // Custom Alert Controls
         function showAlert(title, msg) {
             document.getElementById('alertTitle').innerText = title;
             document.getElementById('alertMsg').innerText = msg;
@@ -349,25 +342,20 @@
             document.getElementById('customAlert').classList.add('hidden');
         }
 
-        // Initial Load
         window.onload = function() {
-            // Set current month as default
             const now = new Date();
             const monthStr = now.toISOString().substring(0, 7);
             document.getElementById('month').value = monthStr;
             
-            // 파이썬(Streamlit)에서 전달받은 사용자 정보로 구성원 고정
             if (window.INJECTED_USER) {
                 const memberSelect = document.getElementById('member');
-                // select box의 옵션에 해당 유저가 있는지 확인
                 const options = Array.from(memberSelect.options).map(opt => opt.value);
                 if (options.includes(window.INJECTED_USER)) {
                     memberSelect.value = window.INJECTED_USER;
-                    memberSelect.disabled = true; // 다른 사람으로 변경하지 못하게 선택 상자 잠금
-                    memberSelect.classList.add('bg-gray-100'); // 잠긴 상자를 시각적으로 회색으로 표시
+                    memberSelect.disabled = true;
+                    memberSelect.classList.add('bg-gray-100');
                 }
             }
-
             renderHistory();
         }
     </script>

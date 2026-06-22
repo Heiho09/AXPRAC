@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2048 게임</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Clear+Sans:wght@400;700&display=swap');
+
+    :root {
+      --bg-color: #faf8ef;
+      --board-bg: #bbada0;
+      --empty-cell: #cdc1b4;
+      --text-dark: #776e65;
+      --text-light: #f9f6f2;
+    }
+
+    body {
+      font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-dark);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0;
+      padding: 20px;
+      touch-action: none; /* 모바일 스크롤 방지 */
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      max-width: 400px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 48px;
+      margin: 0;
+      font-weight: 700;
+    }
+
+    .score-container {
+      background-color: var(--board-bg);
+      padding: 10px 20px;
+      border-radius: 6px;
+      color: white;
+      text-align: center;
+    }
+
+    .score-title {
+      font-size: 13px;
+      text-transform: uppercase;
+      font-weight: bold;
+      color: #eee4da;
+    }
+
+    .score-value {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 400px;
+      margin-bottom: 20px;
+    }
+
+    .restart-btn {
+      background-color: #8f7a66;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .restart-btn:hover {
+      background-color: #9f8b77;
+    }
+
+    .game-container {
+      position: relative;
+      background-color: var(--board-bg);
+      padding: 10px;
+      border-radius: 6px;
+      width: 100%;
+      max-width: 400px;
+      box-sizing: border-box;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: 10px;
+      aspect-ratio: 1 / 1;
+    }
+
+    .cell {
+      background-color: var(--empty-cell);
+      border-radius: 6px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2rem;
+      font-weight: bold;
+      transition: transform 0.1s ease-in-out;
+    }
+
+    /* 타일 색상 지정 */
+    .cell[data-val="2"] { background: #eee4da; color: var(--text-dark); }
+    .cell[data-val="4"] { background: #ede0c8; color: var(--text-dark); }
+    .cell[data-val="8"] { background: #f2b179; color: var(--text-light); }
+    .cell[data-val="16"] { background: #f59563; color: var(--text-light); }
+    .cell[data-val="32"] { background: #f67c5f; color: var(--text-light); }
+    .cell[data-val="64"] { background: #f65e3b; color: var(--text-light); }
+    .cell[data-val="128"] { background: #edcf72; color: var(--text-light); font-size: 1.6rem; }
+    .cell[data-val="256"] { background: #edcc61; color: var(--text-light); font-size: 1.6rem; }
+    .cell[data-val="512"] { background: #edc850; color: var(--text-light); font-size: 1.6rem; }
+    .cell[data-val="1024"] { background: #edc53f; color: var(--text-light); font-size: 1.2rem; }
+    .cell[data-val="2048"] { background: #edc22e; color: var(--text-light); font-size: 1.2rem; box-shadow: 0 0 10px 4px rgba(243, 215, 116, 0.5); }
+
+    .game-over {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(238, 228, 218, 0.73);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      border-radius: 6px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .game-over.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .game-over p {
+      font-size: 40px;
+      font-weight: bold;
+      color: var(--text-dark);
+      margin-bottom: 20px;
+    }
+
+    /* 새로 생성된 타일 애니메이션 */
+    @keyframes appear {
+      0% { transform: scale(0); }
+      100% { transform: scale(1); }
+    }
+    .cell.new-tile {
+      animation: appear 0.2s ease-in-out;
+    }
+
+    @media (max-width: 450px) {
+      .cell { font-size: 1.5rem; }
+      .cell[data-val="128"], .cell[data-val="256"], .cell[data-val="512"] { font-size: 1.2rem; }
+      .cell[data-val="1024"], .cell[data-val="2048"] { font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>2048</h1>
+    <div class="score-container">
+      <div class="score-title">Score</div>
+      <div class="score-value" id="score">0</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <p style="margin:0; align-self:flex-end; font-size: 14px; color: #776e65;">방향키 또는 스와이프하여 합치세요!</p>
+    <button class="restart-btn" onclick="initGame()">New Game</button>
+  </div>
+
+  <div class="game-container">
+    <div class="grid" id="grid">
+      <!-- 타일들이 자바스크립트를 통해 생성됩니다 -->
+    </div>
+    <div class="game-over" id="game-over">
+      <p>Game Over!</p>
+      <button class="restart-btn" onclick="initGame()">Try Again</button>
+    </div>
+  </div>
+
+  <script>
+    const SIZE = 4;
+    let board = [];
+    let score = 0;
+    const gridElement = document.getElementById('grid');
+    const scoreElement = document.getElementById('score');
+    const gameOverElement = document.getElementById('game-over');
+
+    // 1. 게임 초기화
+    function initGame() {
+      board = Array(SIZE).fill().map(() => Array(SIZE).fill(0));
+      score = 0;
+      scoreElement.innerText = score;
+      gameOverElement.classList.remove('active');
+      
+      addNewTile();
+      addNewTile();
+      renderBoard();
+    }
+
+    // 2. 새로운 타일 생성 (2 또는 4)
+    function addNewTile() {
+      let emptyCells = [];
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+          if (board[r][c] === 0) emptyCells.push({r, c});
+        }
+      }
+      
+      if (emptyCells.length > 0) {
+        let {r, c} = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+        board[r][c] = Math.random() < 0.9 ? 2 : 4;
+        return {r, c}; // 새로 생성된 위치 반환 (애니메이션용)
+      }
+      return null;
+    }
+
+    // 3. 화면 렌더링
+    function renderBoard(newTilePos = null) {
+      gridElement.innerHTML = '';
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+          let cell = document.createElement('div');
+          cell.classList.add('cell');
+          let val = board[r][c];
+          
+          if (val !== 0) {
+            cell.innerText = val;
+            cell.setAttribute('data-val', val);
+            // 방금 생성된 타일이면 애니메이션 클래스 추가
+            if (newTilePos && newTilePos.r === r && newTilePos.c === c) {
+              cell.classList.add('new-tile');
+            }
+          }
+          gridElement.appendChild(cell);
+        }
+      }
+      scoreElement.innerText = score;
+    }
+
+    // 4. 단일 배열 밀기 및 합치기 로직 (핵심 알고리즘)
+    function slide(row) {
+      // 0이 아닌 숫자만 필터링
+      let filteredRow = row.filter(val => val !== 0); 
+      
+      // 인접한 같은 숫자 합치기
+      for (let i = 0; i < filteredRow.length - 1; i++) {
+        if (filteredRow[i] !== 0 && filteredRow[i] === filteredRow[i + 1]) {
+          filteredRow[i] *= 2;
+          score += filteredRow[i]; // 점수 증가
+          filteredRow[i + 1] = 0;
+        }
+      }
+      
+      // 합친 후 발생한 0을 다시 필터링
+      filteredRow = filteredRow.filter(val => val !== 0); 
+      
+      // 빈 자리를 0으로 채우기
+      while (filteredRow.length < SIZE) {
+        filteredRow.push(0);
+      }
+      return filteredRow;
+    }
+
+    // 5. 방향별 이동 로직
+    function moveLeft() {
+      let changed = false;
+      for (let r = 0; r < SIZE; r++) {
+        let oldRow = [...board[r]];
+        board[r] = slide(board[r]);
+        if (oldRow.join(',') !== board[r].join(',')) changed = true;
+      }
+      return changed;
+    }
+
+    function moveRight() {
+      let changed = false;
+      for (let r = 0; r < SIZE; r++) {
+        let oldRow = [...board[r]];
+        // 배열을 뒤집어서 slide 적용 후 다시 뒤집기
+        board[r] = slide([...board[r]].reverse()).reverse();
+        if (oldRow.join(',') !== board[r].join(',')) changed = true;
+      }
+      return changed;
+    }
+
+    function moveUp() {
+      let changed = false;
+      for (let c = 0; c < SIZE; c++) {
+        let oldCol = [board[0][c], board[1][c], board[2][c], board[3][c]];
+        let newCol = slide([...oldCol]);
+        for (let r = 0; r < SIZE; r++) {
+          board[r][c] = newCol[r];
+        }
+        if (oldCol.join(',') !== newCol.join(',')) changed = true;
+      }
+      return changed;
+    }
+
+    function moveDown() {
+      let changed = false;
+      for (let c = 0; c < SIZE; c++) {
+        let oldCol = [board[0][c], board[1][c], board[2][c], board[3][c]];
+        // 배열을 뒤집어서 slide 적용 후 다시 뒤집기
+        let newCol = slide([...oldCol].reverse()).reverse();
+        for (let r = 0; r < SIZE; r++) {
+          board[r][c] = newCol[r];
+        }
+        if (oldCol.join(',') !== newCol.join(',')) changed = true;
+      }
+      return changed;
+    }
+
+    // 6. 게임 오버 체크
+    function checkGameOver() {
+      // 1. 빈칸이 있으면 게임 오버 아님
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+          if (board[r][c] === 0) return false;
+        }
+      }
+      // 2. 가로/세로로 인접한 같은 숫자가 있으면 게임 오버 아님
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+          let current = board[r][c];
+          if (
+            (c < SIZE - 1 && current === board[r][c + 1]) || // 우측 체크
+            (r < SIZE - 1 && current === board[r + 1][c])    // 아래측 체크
+          ) {
+            return false;
+          }
+        }
+      }
+      return true; // 움직일 수 있는 곳이 없음
+    }
+
+    // 7. 키보드 및 터치 이벤트 핸들러
+    function handleMove(direction) {
+      if (gameOverElement.classList.contains('active')) return;
+
+      let moved = false;
+      if (direction === 'ArrowLeft') moved = moveLeft();
+      else if (direction === 'ArrowRight') moved = moveRight();
+      else if (direction === 'ArrowUp') moved = moveUp();
+      else if (direction === 'ArrowDown') moved = moveDown();
+
+      if (moved) {
+        let newPos = addNewTile();
+        renderBoard(newPos);
+        
+        if (checkGameOver()) {
+          setTimeout(() => {
+            gameOverElement.classList.add('active');
+          }, 300);
+        }
+      }
+    }
+
+    // 키보드 이벤트
+    document.addEventListener('keydown', (e) => {
+      // 방향키를 눌렀을 때 화면이 스크롤되는 것을 방지
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        handleMove(e.key);
+      }
+    });
+
+    // 모바일 터치 (스와이프) 이벤트
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    gridElement.addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      e.preventDefault();
+    }, { passive: false });
+
+    gridElement.addEventListener('touchend', (e) => {
+      if (gameOverElement.classList.contains('active')) return;
+
+      let touchEndX = e.changedTouches[0].clientX;
+      let touchEndY = e.changedTouches[0].clientY;
+
+      let dx = touchEndX - touchStartX;
+      let dy = touchEndY - touchStartY;
+      
+      // 터치 이동 거리가 짧으면 무시 (클릭 등)
+      if (Math.abs(dx) < 30 && Math.abs(dy) < 30) return;
+
+      if (Math.abs(dx) > Math.abs(dy)) {
+        // 수평 스와이프
+        if (dx > 0) handleMove('ArrowRight');
+        else handleMove('ArrowLeft');
+      } else {
+        // 수직 스와이프
+        if (dy > 0) handleMove('ArrowDown');
+        else handleMove('ArrowUp');
+      }
+    });
+
+    // 게임 시작
+    initGame();
+  </script>
+</body>
+</html>

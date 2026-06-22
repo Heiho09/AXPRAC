@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>가족 지출 관리 대시보드</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+    <script src="[https://cdn.jsdelivr.net/npm/chart.js](https://cdn.jsdelivr.net/npm/chart.js)"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap');
+        @import url('[https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap](https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap)');
         body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; }
         .card { background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
         .tab-active { border-bottom: 2px solid #2563eb; color: #2563eb; }
@@ -96,15 +96,15 @@
         <div id="section-dashboard" class="hidden space-y-8">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="card p-6 bg-blue-50">
-                    <p class="text-sm text-blue-600 font-semibold">전체 누적 사용액</p>
+                    <p class="text-sm text-blue-600 font-semibold">전체 누적 지출액</p>
                     <h3 id="stat-total" class="text-3xl font-bold text-blue-900 mt-1">0원</h3>
                 </div>
                 <div class="card p-6 bg-green-50">
-                    <p class="text-sm text-green-600 font-semibold">이번 달 최대 사용 항목</p>
+                    <p class="text-sm text-green-600 font-semibold">가장 큰 지출 항목</p>
                     <h3 id="stat-top-category" class="text-xl font-bold text-green-900 mt-1">-</h3>
                 </div>
                 <div class="card p-6 bg-purple-50">
-                    <p class="text-sm text-purple-600 font-semibold">데이터 건수</p>
+                    <p class="text-sm text-purple-600 font-semibold">총 기록 건수</p>
                     <h3 id="stat-count" class="text-3xl font-bold text-purple-900 mt-1">0건</h3>
                 </div>
             </div>
@@ -141,7 +141,7 @@
         </div>
     </div>
 
-    <!-- Alert Modal Replacement -->
+    <!-- Alert Modal -->
     <div id="customAlert" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
         <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full mx-4">
             <h3 class="text-lg font-bold mb-2" id="alertTitle">알림</h3>
@@ -151,7 +151,7 @@
     </div>
 
     <script>
-        // State Management
+        // State Management (가족용 스토리지 키로 변경)
         let budgetData = JSON.parse(localStorage.getItem('familyBudgetData')) || [];
         let categoryChart = null;
         let memberChart = null;
@@ -186,7 +186,10 @@
             budgetData.unshift(entry);
             saveData();
             renderHistory();
-            this.reset();
+            
+            // 금액 입력칸만 초기화 (다른건 유지해서 연속 입력 편하게)
+            document.getElementById('amount').value = ''; 
+            
             showAlert('성공', '지출 내역이 정상적으로 기록되었습니다.');
         });
 
@@ -230,7 +233,7 @@
             `).join('');
             
             if(budgetData.length === 0) {
-                body.innerHTML = `<tr><td colspan="5" class="py-10 text-center text-gray-400">등록된 데이터가 없습니다.</td></tr>`;
+                body.innerHTML = `<tr><td colspan="5" class="py-10 text-center text-gray-400">등록된 지출 데이터가 없습니다.</td></tr>`;
             }
         }
 
@@ -287,7 +290,7 @@
                 data: {
                     labels: Object.keys(memMap),
                     datasets: [{
-                        label: '사용 금액',
+                        label: '지출 금액',
                         data: Object.values(memMap),
                         backgroundColor: '#60a5fa'
                     }]
@@ -331,7 +334,7 @@
             }).join('');
             
             if(sortedMonths.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-gray-400">데이터가 없습니다.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-gray-400">데이터가 없습니다.</td></tr>`;
             }
         }
 
@@ -352,6 +355,19 @@
             const now = new Date();
             const monthStr = now.toISOString().substring(0, 7);
             document.getElementById('month').value = monthStr;
+            
+            // 파이썬(Streamlit)에서 전달받은 사용자 정보로 구성원 고정
+            if (window.INJECTED_USER) {
+                const memberSelect = document.getElementById('member');
+                // select box의 옵션에 해당 유저가 있는지 확인
+                const options = Array.from(memberSelect.options).map(opt => opt.value);
+                if (options.includes(window.INJECTED_USER)) {
+                    memberSelect.value = window.INJECTED_USER;
+                    memberSelect.disabled = true; // 다른 사람으로 변경하지 못하게 선택 상자 잠금
+                    memberSelect.classList.add('bg-gray-100'); // 잠긴 상자를 시각적으로 회색으로 표시
+                }
+            }
+
             renderHistory();
         }
     </script>

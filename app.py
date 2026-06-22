@@ -51,7 +51,7 @@ else:
          
     # HTML 파일 읽기 및 Streamlit 화면에 삽입 (iframe 형태)
     try:
-        with open("team_budget_dashboard.html", "r", encoding="utf-8") as f:
+        with open("budget_dashboard.html", "r", encoding="utf-8") as f:
             html_code = f.read()
         
         # Python에서 저장한 로그인 유저 ID를 HTML 코드에 자바스크립트 변수로 주입

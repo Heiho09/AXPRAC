@@ -6,7 +6,7 @@ import streamlit.components.v1 as components
 st.set_page_config(page_title="우리 가족 지출 관리", layout="wide")
 
 # GAS 웹 앱 URL (1단계에서 복사한 주소 붙여넣기)
-GAS_AUTH_URL = https://script.google.com/macros/s/AKfycbyi7MswxAdpP6Wv-zEx7YCFQPjC1VMwhn9RfeqbBpgYWuTAKyThgKSY20RJWMMvdGJB/exec
+GAS_AUTH_URL = "https://script.google.com/macros/s/AKfycbyi7MswxAdpP6Wv-zEx7YCFQPjC1VMwhn9RfeqbBpgYWuTAKyThgKSY20RJWMMvdGJB/exec"
 
 # 세션 상태 초기화 (로그인 여부 저장)
 if 'logged_in' not in st.session_state:

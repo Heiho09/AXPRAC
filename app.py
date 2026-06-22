@@ -5,12 +5,13 @@ import streamlit.components.v1 as components
 # 페이지 설정
 st.set_page_config(page_title="우리 가족 지출 관리", layout="wide")
 
-# GAS 웹 앱 URL (1단계에서 복사한 주소 붙여넣기)
-GAS_AUTH_URL = "https://script.google.com/macros/s/AKfycbw8aSdAa1SftZvt8tLhhD4haOmVZgBjP0yHyLs-f9HsZLdutjscf6jtP_NGYpgUKNTojg/exec"
+# GAS 웹 앱 URL (1단계에서 복사한 주소 붙여넣기 - 반드시 따옴표 안에 넣으세요)
+GAS_AUTH_URL = "[https://script.google.com/macros/s/본인의_스크립트_ID/exec](https://script.google.com/macros/s/본인의_스크립트_ID/exec)"
 
 # 세션 상태 초기화 (로그인 여부 저장)
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
+    st.session_state['current_user'] = ""
 
 # 로그인 함수
 def login(user_id, user_pw):
@@ -35,20 +36,30 @@ if not st.session_state['logged_in']:
         if submit_button:
             if login(user_id, user_pw):
                 st.session_state['logged_in'] = True
+                st.session_state['current_user'] = user_id  # 로그인 성공 시 유저 ID 저장
                 st.success("로그인 성공!")
                 st.rerun()  # 화면 새로고침
             else:
                 st.error("아이디 또는 비밀번호가 틀렸습니다.")
 else:
     # 로그인 성공 시 HTML 대시보드 렌더링
-    st.title("🏠 가족 지출 관리 대시보드")
+    st.title(f"🏠 {st.session_state['current_user']}님의 지출 관리 대시보드") # 제목에 접속자 표시
     if st.button("로그아웃"):
          st.session_state['logged_in'] = False
+         st.session_state['current_user'] = ""
          st.rerun()
          
     # HTML 파일 읽기 및 Streamlit 화면에 삽입 (iframe 형태)
-    with open("budget_dashboard.html", "r", encoding="utf-8") as f:
-        html_code = f.read()
-    
-    # height를 충분히 주어 스크롤 없이 보이게 설정
-    components.html(html_code, height=1200, scrolling=True)
+    try:
+        with open("team_budget_dashboard.html", "r", encoding="utf-8") as f:
+            html_code = f.read()
+        
+        # Python에서 저장한 로그인 유저 ID를 HTML 코드에 자바스크립트 변수로 주입
+        user_id = st.session_state['current_user']
+        injection_script = f"<script>window.INJECTED_USER = '{user_id}';</script>"
+        html_code = html_code.replace("</head>", injection_script + "\n</head>")
+        
+        # height를 충분히 주어 스크롤 없이 보이게 설정
+        components.html(html_code, height=1200, scrolling=True)
+    except FileNotFoundError:
+        st.error("HTML 파일을 찾을 수 없습니다. 깃허브 저장소에 'team_budget_dashboard.html' 파일이 업로드 되어 있는지 확인해주세요.")

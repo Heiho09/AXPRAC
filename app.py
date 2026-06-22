@@ -47,7 +47,7 @@ else:
          st.rerun()
          
     # HTML 파일 읽기 및 Streamlit 화면에 삽입 (iframe 형태)
-    with open("team_budget_dashboard.html", "r", encoding="utf-8") as f:
+    with open("budget_dashboard.html", "r", encoding="utf-8") as f:
         html_code = f.read()
     
     # height를 충분히 주어 스크롤 없이 보이게 설정
